@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "k-context"
+version = "0.1.0"
+description = "Local personal knowledge-base assistant skeleton"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+kb = "k_context.presentation.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
