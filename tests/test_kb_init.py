@@ -79,7 +79,7 @@ class KbInitTests(unittest.TestCase):
         self.assertIn("add", help_text)
         self.assertIn("index", help_text)
         self.assertIn("search", help_text)
-        self.assertNotIn("ask", help_text)
+        self.assertIn("ask", help_text)
 
 
 if __name__ == "__main__":

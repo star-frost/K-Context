@@ -1,88 +1,94 @@
 # 文档入口
 
-本目录是“基于 MCP 的本地化个人知识库助手”毕业设计项目的开发规范入口。后续 Codex 或 oh-my-codex 开始任何开发、修改、测试或文档生成前，必须先读取本文档，再按本文档给出的顺序读取其他规范。
+本目录是“基于 MCP 的本地化个人知识库助手系统”的开发规范入口。Codex 或 oh-my-codex 在进行开发、测试或文档调整前，必须先读取本文件，再按阅读顺序读取其余规范。
 
-本文档是唯一动态入口，负责说明当前开发目标、阅读顺序、允许范围和禁止范围。其他文档只描述最终实现参考，不承载动态目标或过程记录。
+本文件是唯一动态入口，负责说明当前第二轮开发目标、阅读顺序、计划入口、允许范围和禁止范围。其他文档只描述稳定实现规范，不承载动态目标、过程记录或运行记录。
 
 ## 当前开发目标
 
-当前目标是推进**第一轮代码实现**：以 CLI 驱动方式完成本地知识库最小可运行闭环，用于验证 `kb init -> kb add -> kb search -> kb ask` 的端到端路径。
+当前目标是推进第二轮开发标准：在第一轮已完成 `kb init -> kb add -> kb index -> kb search -> kb ask` 最小 RAG 闭环的基础上，更新正式 docs，使后续实现能够按规范引入：
 
-本轮 CLI 仅作为首轮实现与测试入口，不替代最终“单用户桌面端本地知识库助手”的项目形态。第一轮实现必须严格以本目录其他正式文档为 SSOT，不重新设计需求，不擅自修改静态规范。
+- 文本清洗 pipeline；
+- 传统 chunking，并通过配置项解耦；
+- 本地 `bge-base-en-v1.5` embedding；
+- Python 进程内直接调用本地 embedding 模型；
+- Chroma 本地向量数据库；
+- OpenAI-compatible LLM API；
+- 完整 RAG 流程：clean → chunk → embed → vector store → vector retrieval → LLM answer；
+- Recall@k、端到端响应延迟、embedding 耗时、检索耗时、LLM token 消耗；
+- `metrics.jsonl` 与 `sessions.jsonl` 职责边界；
+- `.kcontext/config.json` 配置扩展边界；
+- 第一轮 `.kcontext` 数据兼容与重建边界；
+- embedding、Chroma、LLM API 不可用时的 fallback 边界。
 
-当前执行计划入口：`.omx/plans/implementation-mvp-ralplan-final.md`。
+当前执行计划入口：`.omx/plans/docs-round2-upgrade-ralplan-final.md`。
 
 ## 必读顺序
 
 1. `docs/README.md`：确认当前目标、阅读顺序和边界。
-2. `docs/project_spec.md`：确认项目范围、非目标、系统闭环和成功原则。
-3. `docs/architecture.md`：确认分层结构、MCP 边界、本地处理边界和外部 API 边界。
-4. `docs/data_contracts.md`：确认核心数据对象、字段约束和回溯关系。
-5. `docs/module_interfaces.md`：确认模块职责、输入输出、依赖方向和错误面。
-6. `docs/testing_and_evaluation.md`：确认测试、测量、证据等级和论文表格口径。
-7. `.omx/plans/implementation-mvp-ralplan-final.md`：确认第一轮 CLI 最小闭环任务拆分与验收方式。
+2. `docs/project_spec.md`：确认项目定位、系统闭环、功能范围和非目标。
+3. `docs/architecture.md`：确认分层架构、本地与外部边界、MCP 边界、模型与向量库边界。
+4. `docs/rag_pipeline.md`：确认 RAG 管线顺序、策略配置、索引与查询流程、fallback 关系。
+5. `docs/data_contracts.md`：确认数据字段、配置项、持久化记录、指标事件和回溯不变量。
+6. `docs/module_interfaces.md`：确认模块职责、输入输出、依赖方向和错误面。
+7. `docs/testing_and_evaluation.md`：确认测试与评价口径、指标定义、采集方式和证据等级。
+8. `.omx/plans/docs-round2-upgrade-ralplan-final.md`：确认第二轮 docs 升级计划和 Step8 审计要求。
 
-## 当前允许工作的范围
+## 当前允许工作范围
 
-- 建立 Python 项目基础目录结构与 CLI 入口。
-- 实现 `kb init`、`kb add`、`kb search`、`kb ask` 的 CLI 驱动最小闭环。
-- 支持 PDF、Markdown、TXT 三类本地文档导入；拒绝 DOCX 与其他未列明格式。
-- 将文档解析为统一 IR，并以 IR 作为清洗、切块、索引、检索、引用的唯一后续入口。
-- 基于结构边界和长度约束生成可回溯 Chunk。
-- 本地持久化 Document metadata 与 chunks。
-- 对 Chunk 建立本地检索能力，默认 `top_k = 5`。
-- 按“先检索、后生成”的 RAG 流程生成回答。
-- 通过 OpenAI-compatible API 抽象接入大模型服务；测试中可使用 fake LLM 避免真实外部调用。
-- 返回回答正文与引用列表，并支持证据不足时的明确提示。
-- 记录检索准确率、响应延迟、Token 消耗等可复现测量结果，用于后续优化前后对比。
-- 编写基础自动化测试与 CLI 端到端冒烟测试。
+- 更新现有六份正式 docs。
+- 新增且只新增 `docs/rag_pipeline.md`。
+- 将 RAG 管线、配置项、Chroma、embedding、LLM、metrics、Recall@k 规范写入对应 SSOT 文档。
+- 保持 README 作为唯一动态入口。
+- 保持非 README 文档为稳定实现规范。
 
-## 当前不得工作的范围
+## 当前禁止工作范围
 
-- 不支持 DOCX 或其他未列明文档格式。
-- 不实现摘要生成功能。
-- 不实现多用户账号、云端同步、企业权限、团队协作知识库。
-- 不把 MCP 扩展成通用 Agent 平台、插件商店、工作流引擎或公开 SaaS。
-- 不绕过 IR 直接切块、索引、检索或问答。
-- 不绕过检索直接让模型回答本地知识库问题。
-- 不返回无引用的确定性回答。
-- 不默认把全量文档或全部知识库发送给外部模型。
-- 不在第一轮实现桌面端 UI；CLI 只是首轮闭环验证入口。
-- 不设置检索准确率、响应延迟、Token 消耗的最低合格线或固定数值阈值。
-- 不修改除本文档外的静态 docs 规范，除非用户明确要求。
+- 不修改 `src/`。
+- 不修改 `tests/`。
+- 不修改 `pyproject.toml`。
+- 不修改 `.omx/plans/docs-round2-upgrade-ralplan-final.md`。
+- 不新增计划外 docs 文件。
+- 不写代码。
+- 不实现 OCR、DOCX、摘要生成、多用户、云同步、chunking 方法对比实验、本地 App UI、后台进程管理。
+- 不写真实 API key。
+- 不写真实性能结果或运行记录。
+- 不设置固定数值通过条件。
 
 ## 全局硬约束摘要
 
-- 项目形态：单用户桌面端本地知识库助手。
-- 首轮入口：CLI 驱动的最小可运行闭环。
-- 支持格式：PDF、Markdown、TXT。
+- 项目形态：面向单个个人用户的本地知识库助手。
+- 支持文档类型：PDF、Markdown、TXT。
+- 不支持文档类型：DOCX 及其他未列明格式。
 - 实现语言：Python。
-- 大模型接入：OpenAI-compatible API。
-- 密钥管理：API Key 从环境变量读取。
-- 本地处理：文档存储、解析、清洗、切块、索引、检索均在本地完成。
-- 数据入口：IR 是清洗、切块、索引、检索、引用的统一入口。
-- 检索对象：Chunk。
-- 默认召回数量：top_k = 5。
-- 回答结构：回答正文与引用列表必须同时返回。
-- 证据不足：必须明确提示当前知识库依据不足。
+- embedding 默认模型：本地 `bge-base-en-v1.5`。
+- embedding 接入：Python 进程内直接调用本地模型。
+- 向量数据库：Chroma，本地持久化。
+- LLM 接入：OpenAI-compatible API。
+- API key：只允许从环境变量读取，不落盘。
+- 检索默认模式：vector retrieval。
+- fallback：保留 keyword search fallback 与 no-LLM grounded synthesis fallback。
+- 回答约束：必须基于 retrieved chunks，并输出 sources。
 
 ## 文档职责索引
 
 | 文件 | 职责 | SSOT 范围 |
 |---|---|---|
-| `README.md` | 入口、阅读顺序、当前目标、允许与禁止范围 | 当前目标 / 优先级 |
+| `README.md` | 唯一动态入口、阅读顺序、当前目标、允许与禁止范围 | 当前目标 / 优先级 / 计划入口 |
 | `project_spec.md` | 项目定位、系统闭环、范围、非目标、高层成功原则 | 项目范围 / 非目标 |
-| `architecture.md` | 分层架构、核心数据流、MCP 边界、本地与外部 API 边界 | 架构层次 / MCP 边界 |
-| `data_contracts.md` | 核心数据对象、字段语义、不变量、引用回溯 | 数据字段 / 不变量 |
+| `architecture.md` | 分层架构、依赖方向、本地与外部边界、MCP 边界 | 架构层次 / 边界 |
+| `rag_pipeline.md` | RAG 管线、策略配置、索引与查询流程、fallback 关系 | 流程顺序 / 策略使用 |
+| `data_contracts.md` | 数据对象、配置项、持久化记录、指标事件、不变量 | 字段 / 数据结构 / 不变量 |
 | `module_interfaces.md` | 模块职责、输入输出、依赖方向、错误面 | 模块职责 / I-O / 错误面 |
-| `testing_and_evaluation.md` | 测试与测量方法、证据等级、论文表格口径 | 测试测量 / 证据判定 |
+| `testing_and_evaluation.md` | 测试与评价口径、指标定义、证据等级 | 评价方法 / 采集口径 |
 
 ## 变更规则
 
-1. 若只调整当前目标或本轮优先级，只修改 `docs/README.md`。
-2. 若改变项目范围、非目标或高层成功原则，必须修改 `docs/project_spec.md`。
-3. 若改变架构层次、依赖方向或 MCP 边界，必须修改 `docs/architecture.md`。
-4. 若改变字段、对象、不变量或回溯关系，必须修改 `docs/data_contracts.md`。
-5. 若改变模块职责、输入输出或错误面，必须修改 `docs/module_interfaces.md`。
-6. 若改变测试测量方法或证据等级，必须修改 `docs/testing_and_evaluation.md`。
-7. 任何静态规范变更都必须由用户明确提出，不得由 Codex 在开发过程中自行写入。
+1. 当前目标、阅读顺序或计划入口变化，只修改 `docs/README.md`。
+2. 项目范围、非目标或高层成功原则变化，修改 `docs/project_spec.md`。
+3. 架构层次、依赖方向、本地/外部边界变化，修改 `docs/architecture.md`。
+4. RAG 流程顺序、策略配置使用方式、fallback 关系变化，修改 `docs/rag_pipeline.md`。
+5. 字段、配置项、持久化记录结构或不变量变化，修改 `docs/data_contracts.md`。
+6. 模块职责、输入输出或错误面变化，修改 `docs/module_interfaces.md`。
+7. 指标定义、采集口径或证据等级变化，修改 `docs/testing_and_evaluation.md`。
+8. 若文档之间出现冲突，按各领域 SSOT 归属裁决；无法裁决时记录冲突并由用户决断。

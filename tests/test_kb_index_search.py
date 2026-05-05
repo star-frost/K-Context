@@ -94,13 +94,13 @@ class KbIndexSearchTests(unittest.TestCase):
             self.assertIn("[2]", completed.stdout)
             self.assertNotIn("[3]", completed.stdout)
 
-    def test_cli_scope_does_not_expose_ask(self) -> None:
+    def test_cli_scope_exposes_search_and_ask(self) -> None:
         completed = _run_cli("--help")
 
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertIn("index", completed.stdout)
         self.assertIn("search", completed.stdout)
-        self.assertNotIn("ask", completed.stdout)
+        self.assertIn("ask", completed.stdout)
 
 
 def _run_cli(*args: str) -> subprocess.CompletedProcess[str]:

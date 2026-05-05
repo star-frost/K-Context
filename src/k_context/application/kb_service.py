@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from k_context.application.answer_service import GroundedAnswer, GroundedAnswerService
 from k_context.application.chunking_service import ChunkingService
 from k_context.application.document_parser import DocumentParser
 from k_context.application.retrieval_service import DEFAULT_TOP_K, RetrievalService, SearchResult
@@ -57,11 +58,13 @@ class KnowledgeBaseService:
         parser: DocumentParser | None = None,
         chunking: ChunkingService | None = None,
         retrieval: RetrievalService | None = None,
+        answer_service: GroundedAnswerService | None = None,
     ) -> None:
         self._store = store or LocalKnowledgeBaseStore()
         self._parser = parser or DocumentParser()
         self._chunking = chunking or ChunkingService()
         self._retrieval = retrieval or RetrievalService()
+        self._answer_service = answer_service or GroundedAnswerService()
 
     def init(self, root: Path) -> KbInitResult:
         """Create the local knowledge-base directory layout under ``root``."""
@@ -122,6 +125,12 @@ class KnowledgeBaseService:
             chunks_path=kb_paths.chunks_path,
             chunks_available=len(chunks),
         )
+
+    def ask(self, root: Path, question: str, top_k: int = DEFAULT_TOP_K) -> GroundedAnswer:
+        """Answer a question using retrieved chunks only."""
+
+        search_results = self.search(root=root, query=question, top_k=top_k)
+        return self._answer_service.synthesize(question, search_results.results)
 
     def _to_document_block(self, document: Document, parsed_block: ParsedBlock) -> DocumentBlock:
         return DocumentBlock.create(

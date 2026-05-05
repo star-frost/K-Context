@@ -78,6 +78,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     search_parser.set_defaults(handler=_handle_search)
 
+    ask_parser = subcommands.add_parser(
+        "ask",
+        help="Answer a question using retrieved local chunks.",
+    )
+    ask_parser.add_argument("question", help="Question text.")
+    ask_parser.add_argument(
+        "--root",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root containing the .kcontext directory.",
+    )
+    ask_parser.add_argument(
+        "--top-k",
+        type=int,
+        default=DEFAULT_TOP_K,
+        help="Maximum number of chunks to use as sources.",
+    )
+    ask_parser.set_defaults(handler=_handle_ask)
+
     return parser
 
 
@@ -153,6 +172,30 @@ def _handle_search(args: argparse.Namespace) -> int:
         print(f"  score: {search_result.score:g}")
         print(f"  block_ids: {', '.join(chunk.block_ids)}")
         print(f"  text: {search_result.snippet()}")
+    return 0
+
+
+def _handle_ask(args: argparse.Namespace) -> int:
+    try:
+        answer = KnowledgeBaseService().ask(args.root, args.question, args.top_k)
+    except (FileNotFoundError, OSError, ValueError) as exc:
+        print(f"Error: {exc}")
+        return 1
+
+    print("answer:")
+    print(answer.answer)
+    print(f"evidence_level: {answer.evidence_level}")
+    print("sources:")
+    if not answer.sources:
+        print("  []")
+        return 0
+
+    for source in answer.sources:
+        print(f"  - chunk_id: {source.chunk_id}")
+        print(f"    source_doc_id: {source.source_doc_id}")
+        print(f"    source_doc_name: {source.source_doc_name}")
+        print(f"    score: {source.score:g}")
+        print(f"    block_ids: {', '.join(source.block_ids)}")
     return 0
 
 
