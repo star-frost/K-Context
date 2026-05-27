@@ -1,1 +1,1 @@
-"""Document parser adapters."""
+"""文档解析器适配器。"""

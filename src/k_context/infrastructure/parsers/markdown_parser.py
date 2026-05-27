@@ -1,4 +1,4 @@
-"""Markdown parser adapter with minimal heading-path preservation."""
+"""保留最小标题路径的 Markdown 解析器适配器。"""
 
 from __future__ import annotations
 

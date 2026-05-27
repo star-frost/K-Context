@@ -1,4 +1,4 @@
-"""Local on-disk storage layout for a single-user knowledge base."""
+"""单用户知识库的本地磁盘存储布局。"""
 
 from __future__ import annotations
 
@@ -8,14 +8,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+from k_context.domain.models import DEFAULT_CONFIG_VALUES
 
 KB_DIR_NAME = ".kcontext"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 @dataclass(frozen=True)
 class KbInitRecord:
-    """Storage-layer record describing the result of initialization."""
+    """描述初始化结果的存储层记录。"""
 
     kb_root: Path
     created_paths: tuple[Path, ...]
@@ -24,30 +25,37 @@ class KbInitRecord:
 
 @dataclass(frozen=True)
 class KnowledgeBasePaths:
-    """Resolved paths for the local knowledge-base persistence files."""
+    """本地知识库持久化文件的解析后路径。"""
 
     kb_root: Path
+    config_path: Path
     metadata_path: Path
+    blocks_path: Path
     chunks_path: Path
     sessions_path: Path
+    metrics_path: Path
     index_dir: Path
-    blocks_path: Path
+    chroma_dir: Path
+    cleaned_blocks_path: Path
 
 
 class LocalKnowledgeBaseStore:
-    """Creates the minimum local persistence structure required by the docs."""
+    """创建文档要求的最小本地持久化结构。"""
 
     def initialize(self, root: Path) -> KbInitRecord:
         project_root = root.expanduser().resolve()
         kb_root = project_root / KB_DIR_NAME
         config_path = kb_root / "config.json"
 
-        expected_dirs = (kb_root, kb_root / "index")
+        expected_dirs = (kb_root, kb_root / "index", kb_root / "index" / "chroma")
         expected_files = (
             config_path,
             kb_root / "metadata.jsonl",
+            kb_root / "blocks.jsonl",
+            kb_root / "cleaned_blocks.jsonl",
             kb_root / "chunks.jsonl",
             kb_root / "sessions.jsonl",
+            kb_root / "metrics.jsonl",
         )
 
         was_initialized = config_path.exists()
@@ -88,11 +96,15 @@ class LocalKnowledgeBaseStore:
         kb_root = root.expanduser().resolve() / KB_DIR_NAME
         return KnowledgeBasePaths(
             kb_root=kb_root,
+            config_path=kb_root / "config.json",
             metadata_path=kb_root / "metadata.jsonl",
+            blocks_path=kb_root / "blocks.jsonl",
             chunks_path=kb_root / "chunks.jsonl",
             sessions_path=kb_root / "sessions.jsonl",
+            metrics_path=kb_root / "metrics.jsonl",
             index_dir=kb_root / "index",
-            blocks_path=kb_root / "blocks.jsonl",
+            chroma_dir=kb_root / "index" / "chroma",
+            cleaned_blocks_path=kb_root / "cleaned_blocks.jsonl",
         )
 
     def append_record(self, path: Path, record: Mapping[str, Any]) -> None:
@@ -109,11 +121,25 @@ class LocalKnowledgeBaseStore:
     def read_records(self, path: Path) -> tuple[dict[str, Any], ...]:
         if not path.is_file():
             return ()
-        return tuple(
-            json.loads(line)
-            for line in path.read_text(encoding="utf-8").splitlines()
-            if line.strip()
-        )
+        records: list[dict[str, Any]] = []
+        with path.open("r", encoding="utf-8") as file:
+            for line in file:
+                if line.strip():
+                    records.append(json.loads(line))
+        return tuple(records)
+
+    def read_block_records(self, paths: KnowledgeBasePaths) -> tuple[dict[str, Any], ...]:
+        return self.read_records(paths.blocks_path)
+
+    def read_cleaned_block_records(self, paths: KnowledgeBasePaths) -> tuple[dict[str, Any], ...]:
+        return self.read_records(paths.cleaned_blocks_path)
+
+    def replace_cleaned_block_records(
+        self,
+        paths: KnowledgeBasePaths,
+        records: Iterable[Mapping[str, Any]],
+    ) -> None:
+        self.replace_records(paths.cleaned_blocks_path, records)
 
     def replace_records(self, path: Path, records: Iterable[Mapping[str, Any]]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -126,11 +152,16 @@ class LocalKnowledgeBaseStore:
         payload = {
             "schema_version": SCHEMA_VERSION,
             "created_at": now,
+            **DEFAULT_CONFIG_VALUES,
             "storage": {
                 "metadata": "metadata.jsonl",
+                "blocks": "blocks.jsonl",
+                "cleaned_blocks": "cleaned_blocks.jsonl",
                 "chunks": "chunks.jsonl",
                 "sessions": "sessions.jsonl",
+                "metrics": "metrics.jsonl",
                 "index_dir": "index",
+                "chroma_dir": "index/chroma",
             },
         }
         path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

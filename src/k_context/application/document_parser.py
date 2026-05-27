@@ -1,4 +1,4 @@
-"""Document parsing application service for the minimal add flow."""
+"""用于最小 add 流程的文档解析应用服务。"""
 
 from __future__ import annotations
 
@@ -20,12 +20,12 @@ SUPPORTED_TYPES = {
 
 
 class DocumentParseError(ValueError):
-    """Raised when a file cannot be parsed into non-empty text blocks."""
+    """当文件无法解析为非空文本块时抛出。"""
 
 
 @dataclass(frozen=True)
 class ParsedDocument:
-    """Parsed document text and normalized file type."""
+    """已解析文档文本和规范化文件类型。"""
 
     file_path: Path
     file_type: str
@@ -33,7 +33,7 @@ class ParsedDocument:
 
 
 class DocumentParser:
-    """Converts supported local files into minimal DocumentBlock-ready text blocks."""
+    """将受支持的本地文件转换为可生成 DocumentBlock 的最小文本块。"""
 
     def parse(self, file_path: Path) -> ParsedDocument:
         resolved_path = file_path.expanduser().resolve()

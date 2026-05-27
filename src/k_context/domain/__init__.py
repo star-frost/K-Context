@@ -1,1 +1,1 @@
-"""Domain objects and business rules."""
+"""领域对象和业务规则。"""

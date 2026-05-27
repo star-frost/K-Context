@@ -1,4 +1,4 @@
-"""TXT parser adapter."""
+"""TXT 解析器适配器。"""
 
 from __future__ import annotations
 

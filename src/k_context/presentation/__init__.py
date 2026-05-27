@@ -1,1 +1,1 @@
-"""Presentation-layer entry points."""
+"""表现层入口。"""

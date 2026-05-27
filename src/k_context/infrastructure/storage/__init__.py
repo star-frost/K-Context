@@ -1,1 +1,1 @@
-"""Local persistence adapters."""
+"""本地持久化适配器。"""

@@ -1,1 +1,1 @@
-"""Infrastructure adapters for local files and external services."""
+"""本地文件和外部服务的基础设施适配器。"""
